@@ -4,12 +4,12 @@ from .models import CustomUser, File, Organization
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ('id', 'name', 'file', 'uploaded_at')
+        fields = ('id', 'organization','name', 'file', 'uploaded_at')
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'username', 'password', 'bio', 'date_of_birth', 'phone_number', 'address')
+        fields = ('id', 'email', 'username', 'password', 'bio', 'date_of_birth', 'phone_number', 'address','designation', 'alternate_no')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -27,4 +27,4 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('id', 'user', 'name', 'email', 'phone_number', 'address', 'website', 'logo', 'files')
+        fields = ('id', 'user', 'name', 'email', 'phone_number', 'address', 'country','province_state', 'municipality_ward','website', 'logo', 'files')

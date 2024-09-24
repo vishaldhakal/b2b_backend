@@ -24,6 +24,7 @@ class CustomUser(AbstractUser):
       return self.email
 
 class Organization(models.Model):
+   user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='organizations')
    name = models.CharField(max_length=255)
    email = models.EmailField(unique=True)
    phone_number = models.CharField(max_length=15, blank=True)

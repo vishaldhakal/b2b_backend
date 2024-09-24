@@ -22,7 +22,7 @@ class EventRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 class AttendeeListCreateView(generics.ListCreateAPIView):
     serializer_class = AttendeeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Attendee.objects.filter(event_id=self.kwargs['event_id'])

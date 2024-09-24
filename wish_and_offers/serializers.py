@@ -42,6 +42,13 @@ class WishSerializer(serializers.ModelSerializer):
         model = Wish
         fields = '__all__'
 
+class CreateWishSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(read_only=True)
+
+    class Meta:
+        model = Wish
+        fields = '__all__'
+
 class OfferSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer(read_only=True)
     event = EventSerializer(read_only=True)
@@ -52,10 +59,30 @@ class OfferSerializer(serializers.ModelSerializer):
         model = Offer
         fields = '__all__'
 
+class CreateOfferSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(read_only=True)
+    
+
+    class Meta:
+        model = Offer
+        fields = '__all__'
+
 class MatchSerializer(serializers.ModelSerializer):
     wish = WishSerializer(read_only=True)
     offer = OfferSerializer(read_only=True)
 
+    class Meta:
+        model = Match
+        fields = '__all__'
+
+class MatchWishSerializer(serializers.ModelSerializer):
+    offer = OfferSerializer(read_only=True) 
+    class Meta:
+        model = Match
+        fields = '__all__'
+
+class MatchOfferSerializer(serializers.ModelSerializer):
+    wish = WishSerializer(read_only=True) 
     class Meta:
         model = Match
         fields = '__all__'

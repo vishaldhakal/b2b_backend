@@ -2,11 +2,11 @@
 
 from rest_framework import serializers
 from events.models import Event, Attendee
-from django.contrib.auth.models import User
+from accounts.models import CustomUser
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = CustomUser
         fields = ['id', 'username', 'email']
 
 class EventSerializer(serializers.ModelSerializer):

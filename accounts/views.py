@@ -37,7 +37,7 @@ class UserRegistrationView(generics.CreateAPIView):
 class FileListCreateView(generics.ListCreateAPIView):
     queryset = File.objects.all()
     serializer_class = FileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
 class FileRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = File.objects.all()
@@ -47,7 +47,7 @@ class FileRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 class OrganizationListCreateView(generics.ListCreateAPIView):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
 class OrganizationRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Organization.objects.all()

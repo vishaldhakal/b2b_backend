@@ -2,7 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Category, Product, Service, Wish, Offer, Match
-from .serializers import CategorySerializer, ProductSerializer, ServiceSerializer, WishSerializer, OfferSerializer, MatchSerializer
+from .serializers import CategorySerializer, ProductSerializer, ServiceSerializer, WishSerializer, OfferSerializer, MatchSerializer, CreateWishSerializer, CreateOfferSerializer, MatchWishSerializer, MatchOfferSerializer
 
 class CategoryListCreateView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -20,7 +20,7 @@ class ServiceListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class WishListCreateView(generics.ListCreateAPIView):
-    serializer_class = WishSerializer
+    serializer_class = CreateWishSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -38,7 +38,7 @@ class WishRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save(user=self.request.user)
 
 class OfferListCreateView(generics.ListCreateAPIView):
-    serializer_class = OfferSerializer
+    serializer_class = CreateOfferSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -62,14 +62,45 @@ class MatchListView(generics.ListAPIView):
     def get_queryset(self):
         return Match.objects.filter(wish__user=self.request.user) | Match.objects.filter(offer__user=self.request.user)
 
+# class FindMatchesView(APIView):
+#     # permission_classes = [permissions.IsAdminUser]
+
+#     def post(self, request):
+#         matches = Match.find_matches()
+#         created_matches=Match.objects.bulk_create(matches)
+#         serialized_matches = MatchSerializer(created_matches, many=True).data
+#         return Response({
+#             "message": f"{len(matches)} matches found and created",
+#             "matches": serialized_matches
+#         }, status=status.HTTP_201_CREATED)
+    
 class FindMatchesView(APIView):
-    permission_classes = [permissions.IsAdminUser]
+    def get(self, request):
+        wish_id = request.data.get('wish_id')
+        offer_id = request.data.get('offer_id')
 
-    def post(self, request):
-        matches = Match.find_matches()
-        Match.objects.bulk_create(matches)
-        return Response({"message": f"{len(matches)} matches found and created"}, status=status.HTTP_201_CREATED)
+        if wish_id and offer_id:
+            return Response({"error": "Please provide either wish_id or offer_id, not both."}, 
+                            status=status.HTTP_400_BAD_REQUEST)
 
+        if wish_id:
+            matches = Match.find_matches_for_wish(wish_id)
+            serialized_matches=MatchWishSerializer(matches, many=True).data
+        elif offer_id:
+            matches = Match.find_matches_for_offer(offer_id)
+            serialized_matches=MatchOfferSerializer(matches, many=True).data
+        else:
+            matches = Match.find_matches()
+            serialized_matches=MatchSerializer(matches, many=True).data
+
+        # created_matches = Match.create_matches(matches)
+        # serialized_matches = MatchSerializer(matches, many=True).data
+
+        return Response({
+            "message": f"{len(matches)} matches found and created",
+            "matches": serialized_matches
+        }, status=status.HTTP_201_CREATED)
+    
 class EventWishesOffersView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
