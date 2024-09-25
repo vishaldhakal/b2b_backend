@@ -70,19 +70,33 @@ class CreateOfferSerializer(serializers.ModelSerializer):
 class MatchSerializer(serializers.ModelSerializer):
     wish = WishSerializer(read_only=True)
     offer = OfferSerializer(read_only=True)
+    match_score = serializers.SerializerMethodField()
 
     class Meta:
         model = Match
         fields = '__all__'
+
+    def get_match_score(self, obj):
+        return getattr(obj, 'match_score', None)
 
 class MatchWishSerializer(serializers.ModelSerializer):
-    offer = OfferSerializer(read_only=True) 
+    offer = OfferSerializer(read_only=True)
+    match_score = serializers.SerializerMethodField()
+
     class Meta:
         model = Match
         fields = '__all__'
 
+    def get_match_score(self, obj):
+        return getattr(obj, 'match_score', None)
+
 class MatchOfferSerializer(serializers.ModelSerializer):
-    wish = WishSerializer(read_only=True) 
+    wish = WishSerializer(read_only=True)
+    match_score = serializers.SerializerMethodField()
+
     class Meta:
         model = Match
         fields = '__all__'
+
+    def get_match_score(self, obj):
+        return getattr(obj, 'match_score', None)

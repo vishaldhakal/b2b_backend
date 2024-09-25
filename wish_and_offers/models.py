@@ -1,6 +1,5 @@
 from django.db import models
 from difflib import SequenceMatcher
-
 from accounts.models import CustomUser, Organization
 from events.models import Event
 
@@ -92,8 +91,42 @@ class Match(models.Model):
     @staticmethod
     def are_titles_similar(title1, title2, threshold=0.6):
         return SequenceMatcher(None, title1.lower(), title2.lower()).ratio() > threshold
+    
     @staticmethod
-    def find_matches():
+    def calculate_match_score(wish, offer):
+        score = 0
+        max_score = 0
+        weights = {
+            'exact_match': 50,
+            'category_match': 30,
+            'title_similarity': 20
+        }
+
+        # Check for exact product/service match
+        if (wish.product and offer.product and wish.product == offer.product) or \
+           (wish.service and offer.service and wish.service == offer.service):
+            score += weights['exact_match']
+        # Check for category match
+        elif (wish.product and offer.product and wish.product.category and offer.product.category and 
+              wish.product.category == offer.product.category) or \
+             (wish.service and offer.service and wish.service.category and offer.service.category and 
+              wish.service.category == offer.service.category):
+            score += weights['category_match']
+
+        max_score += max(weights['exact_match'], weights['category_match'])
+
+        # Check title similarity
+        title_similarity = SequenceMatcher(None, wish.title.lower(), offer.title.lower()).ratio()
+        score += weights['title_similarity'] * title_similarity
+        max_score += weights['title_similarity']
+
+        # Calculate percentage
+        percentage_score = (score / max_score) * 100
+
+        return round(percentage_score, 2)
+
+    @classmethod
+    def find_matches(cls):
         matches = []
         wishes = Wish.objects.filter(status='Pending')
         offers = Offer.objects.filter(status='Pending')
@@ -101,13 +134,13 @@ class Match(models.Model):
         for wish in wishes:
             for offer in offers:
                 if wish.wish_type == offer.offer_type:
-                    if (wish.product and offer.product and wish.product == offer.product) or \
-                        (wish.product and offer.product and wish.product.category and offer.product.category and wish.product.category == offer.product.category) or \
-                        (wish.service and offer.service and wish.service == offer.service) or \
-                        (wish.service and offer.service and wish.service.category and offer.service.category and offer.service.category == wish.service.category) or \
-                        Match.are_titles_similar(wish.title, offer.title):
-                        match = Match(wish=wish, offer=offer)
-                        matches.append(match)
+                    score = cls.calculate_match_score(wish, offer)
+                    if score > 0:
+                        match = cls(wish=wish, offer=offer)
+                        matches.append((match, score))
+        
+        # Sort matches by score in descending order
+        matches.sort(key=lambda x: x[1], reverse=True)
         return matches
 
     @classmethod
@@ -118,13 +151,13 @@ class Match(models.Model):
 
         for offer in offers:
             if wish.wish_type == offer.offer_type:
-                if (wish.product and offer.product and wish.product == offer.product) or \
-                    (wish.product and offer.product and wish.product.category and offer.product.category and wish.product.category == offer.product.category) or \
-                    (wish.service and offer.service and wish.service == offer.service) or \
-                    (wish.service and offer.service and wish.service.category and offer.service.category and offer.service.category == wish.service.category) or \
-                    Match.are_titles_similar(wish.title, offer.title):
+                score = cls.calculate_match_score(wish, offer)
+                if score > 0:
                     match = cls(wish=wish, offer=offer)
-                    matches.append(match)
+                    matches.append((match, score))
+        
+        # Sort matches by score in descending order
+        matches.sort(key=lambda x: x[1], reverse=True)
         return matches
 
     @classmethod
@@ -135,15 +168,13 @@ class Match(models.Model):
 
         for wish in wishes:
             if wish.wish_type == offer.offer_type:
-                if (wish.product and offer.product and wish.product == offer.product) or \
-                    (wish.product and offer.product and wish.product.category and offer.product.category and wish.product.category == offer.product.category) or \
-                    (wish.service and offer.service and wish.service == offer.service) or \
-                    (wish.service and offer.service and wish.service.category and offer.service.category and offer.service.category == wish.service.category) or \
-                    Match.are_titles_similar(wish.title, offer.title):
+                score = cls.calculate_match_score(wish, offer)
+                if score > 0:
                     match = cls(wish=wish, offer=offer)
-                    matches.append(match)
+                    matches.append((match, score))
+        
+        # Sort matches by score in descending order
+        matches.sort(key=lambda x: x[1], reverse=True)
         return matches
 
-    @classmethod
-    def create_matches(cls, matches):
-        return cls.objects.bulk_create(matches)
+   

@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Category, Product, Service, Wish, Offer, Match
 from .serializers import CategorySerializer, ProductSerializer, ServiceSerializer, WishSerializer, OfferSerializer, MatchSerializer, CreateWishSerializer, CreateOfferSerializer, MatchWishSerializer, MatchOfferSerializer
+from django.core.exceptions import ObjectDoesNotExist
 
 class CategoryListCreateView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
@@ -62,45 +63,61 @@ class MatchListView(generics.ListAPIView):
     def get_queryset(self):
         return Match.objects.filter(wish__user=self.request.user) | Match.objects.filter(offer__user=self.request.user)
 
-# class FindMatchesView(APIView):
-#     # permission_classes = [permissions.IsAdminUser]
 
-#     def post(self, request):
-#         matches = Match.find_matches()
-#         created_matches=Match.objects.bulk_create(matches)
-#         serialized_matches = MatchSerializer(created_matches, many=True).data
-#         return Response({
-#             "message": f"{len(matches)} matches found and created",
-#             "matches": serialized_matches
-#         }, status=status.HTTP_201_CREATED)
-    
 class FindMatchesView(APIView):
     def get(self, request):
-        wish_id = request.data.get('wish_id')
-        offer_id = request.data.get('offer_id')
+        wish_id = request.query_params.get('wish_id')
+        offer_id = request.query_params.get('offer_id')
 
         if wish_id and offer_id:
             return Response({"error": "Please provide either wish_id or offer_id, not both."}, 
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if wish_id:
-            matches = Match.find_matches_for_wish(wish_id)
-            serialized_matches=MatchWishSerializer(matches, many=True).data
-        elif offer_id:
-            matches = Match.find_matches_for_offer(offer_id)
-            serialized_matches=MatchOfferSerializer(matches, many=True).data
+        try:
+            if wish_id:
+                # Verify that the wish exists
+                Wish.objects.get(id=wish_id)
+                matches = Match.find_matches_for_wish(wish_id)
+                serializer = MatchWishSerializer
+            elif offer_id:
+                # Verify that the offer exists
+                Offer.objects.get(id=offer_id)
+                matches = Match.find_matches_for_offer(offer_id)
+                serializer = MatchOfferSerializer
+            else:
+                matches = Match.find_matches()
+                serializer = MatchSerializer
+
+            serialized_matches = []
+            for match, score in matches:
+                match.match_score = score  # Attach the score to the match object
+                serialized_matches.append(serializer(match).data)
+
+            return Response({
+                "message": f"{len(matches)} matches found",
+                "matches": serialized_matches
+            }, status=status.HTTP_200_OK)
+
+        except ObjectDoesNotExist as e:
+            return Response({
+                "error": f"Invalid {'wish' if wish_id else 'offer'} ID: {str(e)}"
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "error": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SaveMatchView(APIView):
+    def post(self, request):
+        wish_id = request.data.get('wish_id')
+        offer_id = request.data.get('offer_id')
+        if wish_id and offer_id:
+            Match.objects.create(wish_id=wish_id, offer_id=offer_id)
+            return Response({"message": "Match saved successfully"}, status=status.HTTP_201_CREATED)
         else:
-            matches = Match.find_matches()
-            serialized_matches=MatchSerializer(matches, many=True).data
+            return Response({"error": "Invalid request data"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # created_matches = Match.create_matches(matches)
-        # serialized_matches = MatchSerializer(matches, many=True).data
-
-        return Response({
-            "message": f"{len(matches)} matches found and created",
-            "matches": serialized_matches
-        }, status=status.HTTP_201_CREATED)
-    
 class EventWishesOffersView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
