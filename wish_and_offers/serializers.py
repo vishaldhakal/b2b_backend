@@ -1,102 +1,53 @@
+# wish_and_offers/serializers.py
+
 from rest_framework import serializers
-from .models import Category, Product, Service, Wish, Offer, Match
-from accounts.models import CustomUser, Organization
-from events.models import Event
+from .models import Wish, Offer, Product, Service, Category
+from accounts.serializers import UserSerializer
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'image']
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['id', 'name', 'hs_code', 'description', 'image', 'category']
 
 class ServiceSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Service
-        fields = '__all__'
-
-class CustomUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'username', 'email']
-
-class EventSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Event
-        fields = ['id', 'title', 'start_date', 'end_date']
+        fields = ['id', 'name', 'description', 'image', 'category']
 
 class WishSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
-    event = EventSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     product = ProductSerializer(read_only=True)
     service = ServiceSerializer(read_only=True)
 
     class Meta:
         model = Wish
-        fields = '__all__'
-
-class CreateWishSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
-
-    class Meta:
-        model = Wish
-        fields = '__all__'
+        fields = ['id', 'title', 'user', 'event', 'product', 'service', 'status', 'wish_type', 'created_at', 'updated_at']
 
 class OfferSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
-    event = EventSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     product = ProductSerializer(read_only=True)
     service = ServiceSerializer(read_only=True)
 
     class Meta:
         model = Offer
-        fields = '__all__'
+        fields = ['id', 'title', 'user', 'event', 'product', 'service', 'status', 'offer_type', 'created_at', 'updated_at']
 
-class CreateOfferSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
-    
 
+class WishSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wish
+        fields = ['id', 'title','product', 'service', 'status', 'wish_type', 'created_at', 'updated_at']
+
+class OfferSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offer
-        fields = '__all__'
-
-class MatchSerializer(serializers.ModelSerializer):
-    wish = WishSerializer(read_only=True)
-    offer = OfferSerializer(read_only=True)
-    match_score = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Match
-        fields = '__all__'
-
-    def get_match_score(self, obj):
-        return getattr(obj, 'match_score', None)
-
-class MatchWishSerializer(serializers.ModelSerializer):
-    offer = OfferSerializer(read_only=True)
-    match_score = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Match
-        fields = '__all__'
-
-    def get_match_score(self, obj):
-        return getattr(obj, 'match_score', None)
-
-class MatchOfferSerializer(serializers.ModelSerializer):
-    wish = WishSerializer(read_only=True)
-    match_score = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Match
-        fields = '__all__'
-
-    def get_match_score(self, obj):
-        return getattr(obj, 'match_score', None)
+        fields = ['id', 'title','product', 'service', 'status', 'offer_type', 'created_at', 'updated_at']

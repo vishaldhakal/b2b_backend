@@ -28,3 +28,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = ('id', 'user', 'name', 'email', 'phone_number', 'address', 'country','province_state', 'municipality_ward','website', 'logo', 'files')
+
+class UserSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'username', 'email')

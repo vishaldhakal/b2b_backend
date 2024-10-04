@@ -1,26 +1,23 @@
+# wish_and_offers/urls.py
+
 from django.urls import path
 from .views import (
-    CategoryListCreateView,
-    ProductListCreateView,
-    ServiceListCreateView,
     WishListCreateView,
     WishRetrieveUpdateDestroyView,
     OfferListCreateView,
-    OfferRetrieveUpdateDestroyView,
-    MatchListView,
-    FindMatchesView,
-    EventWishesOffersView
+    OfferRetrieveUpdateDestroyView
 )
 
 urlpatterns = [
-    path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
-    path('products/', ProductListCreateView.as_view(), name='product-list-create'),
-    path('services/', ServiceListCreateView.as_view(), name='service-list-create'),
+    # Wish URLs
     path('wishes/', WishListCreateView.as_view(), name='wish-list-create'),
     path('wishes/<int:pk>/', WishRetrieveUpdateDestroyView.as_view(), name='wish-retrieve-update-destroy'),
+    
+    # Offer URLs
     path('offers/', OfferListCreateView.as_view(), name='offer-list-create'),
     path('offers/<int:pk>/', OfferRetrieveUpdateDestroyView.as_view(), name='offer-retrieve-update-destroy'),
-    path('matches/', MatchListView.as_view(), name='match-list'),
-    path('find-matches/', FindMatchesView.as_view(), name='find-matches'),
-    path('events/<int:event_id>/wishes-offers/', EventWishesOffersView.as_view(), name='event-wishes-offers'),
+    
+    # Event-specific Wish and Offer URLs
+    path('events/<int:event_id>/wishes/', WishListCreateView.as_view(), name='event-wish-list-create'),
+    path('events/<int:event_id>/offers/', OfferListCreateView.as_view(), name='event-offer-list-create'),
 ]
